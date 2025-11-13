@@ -15,6 +15,14 @@ window.extractGrowwStockData = function() {
     currentPrice: extractCurrentPrice(),
     dayChange: extractDayChange(),
 
+    // Stock Performance Metrics (Open, Close, Volume, Circuits)
+    open: extractKeyValue('Open'),
+    previousClose: extractKeyValue('Prev. Close', 'Prev Close', 'Previous Close'),
+    volume: extractKeyValue('Volume'),
+    totalTradedValue: extractKeyValue('Total traded value', 'Total Traded Value', 'Traded Value'),
+    upperCircuit: extractKeyValue('Upper Circuit'),
+    lowerCircuit: extractKeyValue('Lower Circuit'),
+
     // Key Metrics (using text-based key-value extraction)
     marketCap: extractKeyValue('Market Cap', 'Mkt cap', 'Market Capitalisation'),
     peRatio: extractKeyValue('P/E Ratio', 'PE Ratio', 'P/E', 'Price to Earnings'),
@@ -28,7 +36,6 @@ window.extractGrowwStockData = function() {
     // Price Metrics
     week52High: extractKeyValue('52W High', '52 Week High', '52WH'),
     week52Low: extractKeyValue('52W Low', '52 Week Low', '52WL'),
-    volume: extractKeyValue('Volume'),
     avgVolume: extractKeyValue('Avg Volume', 'Average Volume'),
 
     // Financial Metrics
