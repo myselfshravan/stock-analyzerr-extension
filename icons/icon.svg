@@ -1,0 +1,45 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bgGradient)"/>
+
+  <!-- Stock chart line -->
+  <path d="M 25 75 L 35 70 L 45 60 L 55 65 L 65 45 L 75 50 L 85 35 L 95 40 L 103 30"
+        stroke="url(#chartGradient)"
+        stroke-width="4"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Chart points -->
+  <circle cx="45" cy="60" r="3" fill="#ffffff"/>
+  <circle cx="65" cy="45" r="3" fill="#ffffff"/>
+  <circle cx="85" cy="35" r="3" fill="#ffffff"/>
+
+  <!-- AI Sparkle (top right) -->
+  <path d="M 100 20 L 102 24 L 106 26 L 102 28 L 100 32 L 98 28 L 94 26 L 98 24 Z"
+        fill="#ffd700"
+        opacity="0.9"/>
+  <path d="M 110 15 L 111 17 L 113 18 L 111 19 L 110 21 L 109 19 L 107 18 L 109 17 Z"
+        fill="#ffd700"
+        opacity="0.8"/>
+
+  <!-- Arrow pointing right (Groww to ChatGPT) -->
+  <path d="M 70 85 L 90 85 M 85 80 L 90 85 L 85 90"
+        stroke="#ffffff"
+        stroke-width="3"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
