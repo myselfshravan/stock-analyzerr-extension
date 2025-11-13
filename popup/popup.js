@@ -8,6 +8,7 @@ const extractBtn = document.getElementById('extract-btn');
 const analyzeBtn = document.getElementById('analyze-btn');
 const statusMessage = document.getElementById('status-message');
 const loading = document.getElementById('loading');
+const autoSubmitToggle = document.getElementById('auto-submit-toggle');
 
 let currentTabId = null;
 let extractedData = null;
@@ -17,6 +18,10 @@ document.addEventListener('DOMContentLoaded', initializePopup);
 
 async function initializePopup() {
   try {
+    // Load auto-submit preference
+    const { autoSubmit } = await chrome.storage.local.get(['autoSubmit']);
+    autoSubmitToggle.checked = autoSubmit !== false; // Default true
+
     // Get current active tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     currentTabId = tab.id;
@@ -47,6 +52,20 @@ async function initializePopup() {
     showLoading(false);
   }
 }
+
+// Save toggle state when changed
+autoSubmitToggle.addEventListener('change', async () => {
+  const isChecked = autoSubmitToggle.checked;
+  await chrome.storage.local.set({ autoSubmit: isChecked });
+  console.log('Auto-submit preference saved:', isChecked);
+
+  showStatus(
+    isChecked
+      ? 'Auto-submit enabled - ChatGPT will auto-send'
+      : 'Auto-submit disabled - you can review before sending',
+    'info'
+  );
+});
 
 async function getBasicStockInfo(tabId) {
   try {
@@ -140,6 +159,10 @@ analyzeBtn.addEventListener('click', handleAnalyze);
 
 async function handleExtract() {
   try {
+    // CLEAR OLD DATA FIRST to prevent stale data
+    console.log('🗑️ Clearing old stock data from storage...');
+    await chrome.storage.local.remove(['growwStockData', 'growwAnalysisRequest']);
+
     showLoading(true);
     extractBtn.disabled = true;
 
@@ -162,7 +185,19 @@ async function handleExtract() {
     });
 
     if (extractResult && extractResult.result) {
-      extractedData = extractResult.result;
+      const result = extractResult.result;
+
+      // CHECK FOR VALIDATION ERRORS
+      if (result.error) {
+        console.error('❌ Extraction validation failed:', result.message);
+        showStatus(`❌ ${result.message}`, 'error');
+        showLoading(false);
+        extractBtn.disabled = false;
+        return; // Don't proceed
+      }
+
+      // Success - use result.data
+      extractedData = result.data;
 
       // Store in chrome.storage
       await chrome.storage.local.set({
@@ -202,15 +237,26 @@ async function handleAnalyze() {
       } else {
         // Need to extract first
         await handleExtract();
+
+        // Check if extraction succeeded
+        if (!extractedData) {
+          throw new Error('Failed to extract data');
+        }
       }
     }
 
-    // Ensure data is stored
+    // Get auto-submit preference
+    const autoSubmit = autoSubmitToggle.checked;
+
+    // Ensure data is stored with auto-submit preference
     await chrome.storage.local.set({
       growwStockData: extractedData,
       growwAnalysisRequest: true,
+      autoSubmit: autoSubmit, // Pass auto-submit setting
       lastExtracted: Date.now()
     });
+
+    console.log('📊 Opening ChatGPT with auto-submit:', autoSubmit);
 
     // Open ChatGPT in a new tab
     const tab = await chrome.tabs.create({
@@ -218,7 +264,12 @@ async function handleAnalyze() {
       active: true
     });
 
-    showStatus('✓ Opening ChatGPT for analysis...', 'success');
+    showStatus(
+      autoSubmit
+        ? '✓ Opening ChatGPT - will auto-submit...'
+        : '✓ Opening ChatGPT - review before sending',
+      'success'
+    );
 
     // Close popup after a short delay
     setTimeout(() => {

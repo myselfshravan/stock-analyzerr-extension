@@ -147,13 +147,23 @@ async function fillAndSubmitPrompt(stockData) {
     // Wait for React to process the input
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Find and click send button
-    const submitted = await clickSendButton();
+    // CHECK AUTO-SUBMIT SETTING
+    const { autoSubmit } = await chrome.storage.local.get(['autoSubmit']);
 
-    if (submitted) {
-      console.log('✅ Analysis request submitted successfully!');
+    if (autoSubmit !== false) { // Default true
+      console.log('🚀 Auto-submit enabled, attempting to submit...');
+
+      // Find and click send button
+      const submitted = await clickSendButton();
+
+      if (submitted) {
+        console.log('✅ Analysis request submitted successfully!');
+      } else {
+        console.log('⚠️ Could not auto-submit, but prompt is filled');
+      }
     } else {
-      console.log('⚠️ Could not auto-submit, but prompt is filled');
+      console.log('ℹ️ Auto-submit disabled - data pasted, please review and submit manually');
+      console.log('💡 You can enable auto-submit in the extension popup');
     }
 
   } catch (error) {
