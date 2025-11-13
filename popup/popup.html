@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Analyzerr</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Stock Analyzerr</h1>
+      <p class="subtitle">AI-Powered Stock Insights</p>
+    </div>
+
+    <div id="stock-info" class="stock-info hidden">
+      <div class="stock-name" id="stock-name">Loading...</div>
+      <div class="stock-price" id="stock-price"></div>
+      <div class="stock-change" id="stock-change"></div>
+    </div>
+
+    <div id="error-message" class="error-message hidden">
+      <span class="error-icon">⚠️</span>
+      <p>Not a supported Groww stock page.</p>
+      <p class="error-hint">Please navigate to a Groww stock page like:<br>
+        <code>groww.in/stocks/stock-name</code>
+      </p>
+    </div>
+
+    <div id="button-container" class="button-container">
+      <button id="extract-btn" class="btn btn-primary" disabled>
+        <span class="btn-icon">📋</span>
+        <span class="btn-text">Extract & Copy Data</span>
+      </button>
+
+      <button id="analyze-btn" class="btn btn-secondary" disabled>
+        <span class="btn-icon">🤖</span>
+        <span class="btn-text">Analyze with ChatGPT</span>
+      </button>
+    </div>
+
+    <div id="status-message" class="status-message hidden"></div>
+
+    <div class="loading hidden" id="loading">
+      <div class="spinner"></div>
+      <p>Processing...</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
