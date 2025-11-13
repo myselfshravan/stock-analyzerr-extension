@@ -1,0 +1,83 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.settings/
+.classpath
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Chrome Extension packaging
+*.crx
+*.pem
+web-ext-artifacts/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python files (from icon generation)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Sample/test files (keep sample_1.html as reference)
+# But ignore any additional samples
+# sample_*.html
+
+# Private keys and secrets
+*.key
+*.secret
+.env
+.env.local
+.env.production
+credentials.json
+secrets/
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+desktop.ini
+
+# Linux
+.directory
+.Trash-*
