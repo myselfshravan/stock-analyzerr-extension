@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Stock Analyzerr - AI Stock Insights",
+  "version": "1.0.0",
+  "description": "AI-powered stock analysis: Extract Groww data and auto-analyze in ChatGPT with one click",
+
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage",
+    "clipboardWrite"
+  ],
+
+  "host_permissions": [
+    "https://groww.in/stocks/*",
+    "https://chatgpt.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://groww.in/stocks/*"],
+      "js": ["scripts/content-groww.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["scripts/content-chatgpt.js"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
