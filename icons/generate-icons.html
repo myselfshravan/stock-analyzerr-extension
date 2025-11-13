@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 10px;
+    }
+    .preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .icon-box {
+      text-align: center;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Extension Icon Generator</h1>
+    <p>Click the buttons below to generate and download icon files:</p>
+
+    <div>
+      <button onclick="generateAllIcons()">Generate All Icons</button>
+    </div>
+
+    <div class="preview" id="preview"></div>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = size;
+      canvas.height = size;
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+
+      // Draw circle background
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size*0.47, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Scale factor for different sizes
+      const scale = size / 128;
+
+      // Draw stock chart line
+      const chartGradient = ctx.createLinearGradient(0, 0, 0, size);
+      chartGradient.addColorStop(0, '#48bb78');
+      chartGradient.addColorStop(1, '#38a169');
+
+      ctx.strokeStyle = chartGradient;
+      ctx.lineWidth = 4 * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(25*scale, 75*scale);
+      ctx.lineTo(35*scale, 70*scale);
+      ctx.lineTo(45*scale, 60*scale);
+      ctx.lineTo(55*scale, 65*scale);
+      ctx.lineTo(65*scale, 45*scale);
+      ctx.lineTo(75*scale, 50*scale);
+      ctx.lineTo(85*scale, 35*scale);
+      ctx.lineTo(95*scale, 40*scale);
+      ctx.lineTo(103*scale, 30*scale);
+      ctx.stroke();
+
+      // Draw chart points
+      ctx.fillStyle = '#ffffff';
+      [[45, 60], [65, 45], [85, 35]].forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(x*scale, y*scale, 3*scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Draw AI sparkles
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+      drawSparkle(ctx, 100*scale, 20*scale, 6*scale);
+      drawSparkle(ctx, 110*scale, 15*scale, 3*scale);
+
+      // Draw arrow
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3 * scale;
+      ctx.beginPath();
+      ctx.moveTo(70*scale, 85*scale);
+      ctx.lineTo(90*scale, 85*scale);
+      ctx.moveTo(85*scale, 80*scale);
+      ctx.lineTo(90*scale, 85*scale);
+      ctx.lineTo(85*scale, 90*scale);
+      ctx.stroke();
+    }
+
+    function drawSparkle(ctx, x, y, size) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x + size*0.3, y - size*0.3);
+      ctx.lineTo(x + size, y);
+      ctx.lineTo(x + size*0.3, y + size*0.3);
+      ctx.lineTo(x, y + size);
+      ctx.lineTo(x - size*0.3, y + size*0.3);
+      ctx.lineTo(x - size, y);
+      ctx.lineTo(x - size*0.3, y - size*0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function downloadCanvas(canvas, filename) {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    function generateAllIcons() {
+      const sizes = [16, 32, 48, 128];
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+
+      sizes.forEach(size => {
+        const canvas = document.createElement('canvas');
+        drawIcon(canvas, size);
+
+        const box = document.createElement('div');
+        box.className = 'icon-box';
+
+        const label = document.createElement('div');
+        label.textContent = `${size}x${size}`;
+        label.style.marginBottom = '8px';
+        label.style.fontWeight = 'bold';
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Download';
+        downloadBtn.onclick = () => downloadCanvas(canvas, `icon${size}.png`);
+
+        box.appendChild(label);
+        box.appendChild(canvas);
+        box.appendChild(downloadBtn);
+        preview.appendChild(box);
+      });
+
+      alert('Icons generated! Click "Download" button under each icon to save.');
+    }
+
+    // Generate on load
+    window.onload = generateAllIcons;
+  </script>
+</body>
+</html>
