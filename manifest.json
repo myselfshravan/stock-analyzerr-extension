@@ -45,7 +45,12 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["scripts/dom-extractor.js"],
+      "resources": [
+        "scripts/dom-extractor.js",
+        "scripts/fab-modal.html",
+        "scripts/fab-modal.css",
+        "scripts/fab-button.css"
+      ],
       "matches": ["https://groww.in/*"]
     }
   ],

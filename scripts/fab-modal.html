@@ -1,0 +1,35 @@
+<!-- Preview Modal for FAB -->
+<div id="fab-preview-modal" class="fab-modal-overlay fab-hidden">
+  <div class="fab-modal-container">
+    <div class="fab-modal-header">
+      <h2>📊 Extracted Stock Data</h2>
+      <button
+        id="fab-modal-close-btn"
+        class="fab-modal-close-btn"
+        title="Close"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="fab-modal-body">
+      <p class="fab-modal-description">
+        This is the data that will be sent to ChatGPT for analysis:
+      </p>
+      <div class="fab-preview-container">
+        <pre id="fab-preview-content" class="fab-preview-content"></pre>
+      </div>
+    </div>
+
+    <div class="fab-modal-footer">
+      <button id="fab-modal-copy-btn" class="fab-btn fab-btn-copy">
+        <span class="fab-btn-icon">📋</span>
+        <span class="fab-btn-text">Copy to Clipboard</span>
+      </button>
+      <button id="fab-modal-analyze-btn" class="fab-btn fab-btn-primary">
+        <span class="fab-btn-icon">🤖</span>
+        <span class="fab-btn-text">Analyze with ChatGPT</span>
+      </button>
+    </div>
+  </div>
+</div>
