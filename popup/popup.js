@@ -337,17 +337,45 @@ async function handleAnalyze() {
       // Success - use result.data
       extractedData = result.data;
 
-      // Store in chrome.storage
+      // Get user preferences
+      const autoSubmit = autoSubmitToggle.checked;
+      const tempChat = tempChatToggle.checked;
+
+      // Store in chrome.storage with preferences
       await chrome.storage.local.set({
         growwStockData: extractedData,
+        growwAnalysisRequest: true,
+        autoSubmit: autoSubmit,
+        tempChat: tempChat,
         lastExtracted: Date.now(),
+      });
+
+      // Build ChatGPT URL with parameters
+      let chatGPTUrl = "https://chatgpt.com/?groww_analysis=true";
+      if (tempChat) {
+        chatGPTUrl += "&temporary-chat=true";
+      }
+
+      // Open ChatGPT directly
+      await chrome.tabs.create({
+        url: chatGPTUrl,
+        active: true,
       });
 
       showLoading(false);
       analyzeBtn.disabled = false;
 
-      // Show preview modal
-      showPreviewModal(extractedData);
+      showStatus(
+        autoSubmit
+          ? "✓ Opening ChatGPT - will auto-submit..."
+          : "✓ Opening ChatGPT - review before sending",
+        "success"
+      );
+
+      // Close popup after a short delay
+      setTimeout(() => {
+        window.close();
+      }, 1000);
     } else {
       throw new Error("No data extracted");
     }
