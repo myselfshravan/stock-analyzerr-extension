@@ -1,7 +1,99 @@
 // Groww Stock Data Extractor - Robust Version
 // Uses semantic HTML, text matching, and structure instead of auto-generated CSS classes
 
-window.extractGrowwStockData = function () {
+// === FINANCIAL CHARTS EXTRACTION (INTERACTIVE TABS) ===
+// Extracts Revenue, Profit, and Net Worth charts by clicking tabs
+async function extractFinancialCharts() {
+  console.log("📊 Starting financial charts extraction...");
+
+  try {
+    const financialData = {};
+
+    // Find all financial tabs (Revenue, Profit, Net Worth)
+    const tabs = Array.from(document.querySelectorAll(".stkF56TabDiv"));
+
+    if (tabs.length === 0) {
+      console.log("⚠️ No financial tabs found");
+      return null;
+    }
+
+    console.log(`Found ${tabs.length} financial tabs`);
+
+    // Get the currency/unit note
+    const unitElement = document.querySelector(".stkF56InfoDiv");
+    const unit = unitElement
+      ? unitElement.textContent.trim().replace("*", "")
+      : "All values are in Rs. Cr";
+
+    // Get the active mode (Quarterly vs Yearly)
+    const activeMode = document.querySelector(".stkF56ToggleActive");
+    const mode = activeMode ? activeMode.textContent.trim() : "Quarterly";
+
+    // Extract data from each tab
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = tabs[i];
+      const tabName = tab.textContent.trim(); // "Revenue", "Profit", "Net Worth"
+
+      console.log(`Extracting ${tabName} data...`);
+
+      // Click tab if not already active
+      if (!tab.classList.contains("contentAccent")) {
+        tab.click();
+        // Wait for chart to render (500ms should be enough)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      // Extract values from SVG chart
+      const valueElements = Array.from(
+        document.querySelectorAll(
+          "svg text.contentPrimary.bodySmall tspan[style*='fill']"
+        )
+      );
+      const values = valueElements
+        .map((el) => el.textContent.trim())
+        .filter((text) => /^[\d,]+$/.test(text)); // Only numeric values like "6,521"
+
+      // Extract date labels from x-axis
+      const dateElements = Array.from(
+        document.querySelectorAll(".visx-axis-bottom tspan")
+      );
+      const dates = dateElements.map((el) => el.textContent.trim());
+
+      // Create data points array combining dates and values
+      const dataPoints = values.map((val, idx) => ({
+        date: dates[idx] || "",
+        value: val,
+      }));
+
+      // Store data for this tab
+      financialData[tabName] = {
+        values: values,
+        dates: dates,
+        dataPoints: dataPoints,
+      };
+
+      console.log(
+        `✓ Extracted ${values.length} data points for ${tabName}:`,
+        dataPoints
+      );
+    }
+
+    // Add metadata
+    financialData._metadata = {
+      unit: unit,
+      mode: mode,
+      extractedAt: new Date().toISOString(),
+    };
+
+    console.log("✅ Financial charts extraction complete:", financialData);
+    return financialData;
+  } catch (error) {
+    console.error("❌ Financial charts extraction error:", error);
+    return null;
+  }
+}
+
+window.extractGrowwStockData = async function (options = {}) {
   console.log("🔍 Starting robust Groww stock data extraction...");
 
   const data = {
@@ -76,6 +168,15 @@ window.extractGrowwStockData = function () {
     // All tables data (fallback to capture everything)
     allTables: extractAllTables(),
   };
+
+  // EXTRACT FINANCIAL CHARTS (if enabled)
+  if (options.extractFinancials) {
+    console.log("📊 Financial charts extraction enabled");
+    const financialCharts = await extractFinancialCharts();
+    if (financialCharts) {
+      data.financialCharts = financialCharts;
+    }
+  }
 
   // VALIDATE MANDATORY FIELDS
   const mandatoryFields = {

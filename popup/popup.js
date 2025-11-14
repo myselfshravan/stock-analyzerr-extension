@@ -10,6 +10,9 @@ const statusMessage = document.getElementById("status-message");
 const loading = document.getElementById("loading");
 const autoSubmitToggle = document.getElementById("auto-submit-toggle");
 const tempChatToggle = document.getElementById("temp-chat-toggle");
+const extractFinancialsToggle = document.getElementById(
+  "extract-financials-toggle"
+);
 
 // Modal Elements
 const previewModal = document.getElementById("preview-modal");
@@ -27,12 +30,15 @@ document.addEventListener("DOMContentLoaded", initializePopup);
 async function initializePopup() {
   try {
     // Load preferences
-    const { autoSubmit, tempChat } = await chrome.storage.local.get([
-      "autoSubmit",
-      "tempChat",
-    ]);
+    const { autoSubmit, tempChat, extractFinancials } =
+      await chrome.storage.local.get([
+        "autoSubmit",
+        "tempChat",
+        "extractFinancials",
+      ]);
     autoSubmitToggle.checked = autoSubmit !== false; // Default true
     tempChatToggle.checked = tempChat === true; // Default false
+    extractFinancialsToggle.checked = extractFinancials === true; // Default false
 
     // Get current active tab
     const [tab] = await chrome.tabs.query({
@@ -92,6 +98,19 @@ tempChatToggle.addEventListener("change", async () => {
     isChecked
       ? "Temporary chat enabled - conversation won't be saved"
       : "Normal chat mode - conversation will be saved",
+    "info"
+  );
+});
+
+extractFinancialsToggle.addEventListener("change", async () => {
+  const isChecked = extractFinancialsToggle.checked;
+  await chrome.storage.local.set({ extractFinancials: isChecked });
+  console.log("Extract financials preference saved:", isChecked);
+
+  showStatus(
+    isChecked
+      ? "Financial charts enabled - extraction will take ~2s longer"
+      : "Financial charts disabled - faster extraction",
     "info"
   );
 });
@@ -207,22 +226,28 @@ async function handleExtract() {
     showLoading(true);
     extractBtn.disabled = true;
 
+    // Get extractFinancials preference
+    const { extractFinancials } = await chrome.storage.local.get([
+      "extractFinancials",
+    ]);
+
     // Execute the extraction script
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       files: ["scripts/dom-extractor.js"],
     });
 
-    // Now call the extraction function
+    // Now call the extraction function with options
     const [extractResult] = await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
-      func: () => {
+      func: (options) => {
         if (typeof window.extractGrowwStockData === "function") {
-          return window.extractGrowwStockData();
+          return window.extractGrowwStockData(options);
         } else {
           throw new Error("Extraction function not found");
         }
       },
+      args: [{ extractFinancials: extractFinancials === true }],
     });
 
     if (extractResult && extractResult.result) {
@@ -274,6 +299,11 @@ async function handleAnalyze() {
       "growwAnalysisRequest",
     ]);
 
+    // Get extractFinancials preference
+    const { extractFinancials } = await chrome.storage.local.get([
+      "extractFinancials",
+    ]);
+
     // Always perform fresh extraction for "Analyze" button
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
@@ -282,13 +312,14 @@ async function handleAnalyze() {
 
     const [extractResult] = await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
-      func: () => {
+      func: (options) => {
         if (typeof window.extractGrowwStockData === "function") {
-          return window.extractGrowwStockData();
+          return window.extractGrowwStockData(options);
         } else {
           throw new Error("Extraction function not found");
         }
       },
+      args: [{ extractFinancials: extractFinancials === true }],
     });
 
     if (extractResult && extractResult.result) {

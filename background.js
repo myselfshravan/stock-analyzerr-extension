@@ -138,22 +138,28 @@ async function handleExtractFromFAB(tabId, sendResponse) {
   try {
     console.log("📊 FAB extraction requested for tab:", tabId);
 
+    // Get extractFinancials preference
+    const { extractFinancials } = await chrome.storage.local.get([
+      "extractFinancials",
+    ]);
+
     // First inject the dom-extractor script
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
       files: ["scripts/dom-extractor.js"],
     });
 
-    // Then call the extraction function
+    // Then call the extraction function with options
     const [extractResult] = await chrome.scripting.executeScript({
       target: { tabId: tabId },
-      func: () => {
+      func: (options) => {
         if (typeof window.extractGrowwStockData === "function") {
-          return window.extractGrowwStockData();
+          return window.extractGrowwStockData(options);
         } else {
           throw new Error("Extraction function not found");
         }
       },
+      args: [{ extractFinancials: extractFinancials === true }],
     });
 
     if (!extractResult || !extractResult.result) {
