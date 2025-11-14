@@ -1,50 +1,53 @@
 // Background Service Worker for Groww to ChatGPT Extension
 // This runs in the background and handles extension lifecycle events
 
-console.log('Background service worker starting...');
+console.log("Background service worker starting...");
 
 // Listen for extension installation
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('Extension installed/updated:', details.reason);
+  console.log("Extension installed/updated:", details.reason);
 
-  if (details.reason === 'install') {
-    console.log('🎉 Groww to ChatGPT extension installed successfully!');
+  if (details.reason === "install") {
+    console.log("🎉 Groww to ChatGPT extension installed successfully!");
 
     // Initialize storage
     chrome.storage.local.set({
       installDate: new Date().toISOString(),
-      version: chrome.runtime.getManifest().version
+      version: chrome.runtime.getManifest().version,
     });
 
     // Optional: Open a welcome page
     // chrome.tabs.create({
     //   url: 'https://github.com/your-repo/groww-extension'
     // });
-  } else if (details.reason === 'update') {
-    console.log('Extension updated to version:', chrome.runtime.getManifest().version);
+  } else if (details.reason === "update") {
+    console.log(
+      "Extension updated to version:",
+      chrome.runtime.getManifest().version
+    );
   }
 });
 
 // Listen for messages from popup or content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background received message:', message);
+  console.log("Background received message:", message);
 
-  if (message.action === 'openChatGPT') {
+  if (message.action === "openChatGPT") {
     handleOpenChatGPT(message.data, sendResponse);
     return true; // Keep message channel open for async response
   }
 
-  if (message.action === 'getStoredData') {
+  if (message.action === "getStoredData") {
     handleGetStoredData(sendResponse);
     return true;
   }
 
-  if (message.action === 'clearData') {
+  if (message.action === "clearData") {
     handleClearData(sendResponse);
     return true;
   }
 
-  if (message.action === 'extractFromFAB') {
+  if (message.action === "extractFromFAB") {
     handleExtractFromFAB(sender.tab.id, sendResponse);
     return true; // Keep message channel open for async response
   }
@@ -60,28 +63,27 @@ async function handleOpenChatGPT(stockData, sendResponse) {
       await chrome.storage.local.set({
         growwStockData: stockData,
         growwAnalysisRequest: true,
-        lastExtracted: Date.now()
+        lastExtracted: Date.now(),
       });
     }
 
     // Create a new tab with ChatGPT
     const tab = await chrome.tabs.create({
-      url: 'https://chatgpt.com/?groww_analysis=true',
-      active: true
+      url: "https://chatgpt.com/?groww_analysis=true",
+      active: true,
     });
 
-    console.log('✓ ChatGPT tab created:', tab.id);
+    console.log("✓ ChatGPT tab created:", tab.id);
 
     sendResponse({
       success: true,
-      tabId: tab.id
+      tabId: tab.id,
     });
-
   } catch (error) {
-    console.error('Error opening ChatGPT:', error);
+    console.error("Error opening ChatGPT:", error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -90,20 +92,20 @@ async function handleOpenChatGPT(stockData, sendResponse) {
 async function handleGetStoredData(sendResponse) {
   try {
     const data = await chrome.storage.local.get([
-      'growwStockData',
-      'lastExtracted',
-      'growwAnalysisRequest'
+      "growwStockData",
+      "lastExtracted",
+      "growwAnalysisRequest",
     ]);
 
     sendResponse({
       success: true,
-      data: data
+      data: data,
     });
   } catch (error) {
-    console.error('Error getting stored data:', error);
+    console.error("Error getting stored data:", error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -112,21 +114,21 @@ async function handleGetStoredData(sendResponse) {
 async function handleClearData(sendResponse) {
   try {
     await chrome.storage.local.remove([
-      'growwStockData',
-      'lastExtracted',
-      'growwAnalysisRequest'
+      "growwStockData",
+      "lastExtracted",
+      "growwAnalysisRequest",
     ]);
 
-    console.log('✓ Stored data cleared');
+    console.log("✓ Stored data cleared");
 
     sendResponse({
-      success: true
+      success: true,
     });
   } catch (error) {
-    console.error('Error clearing data:', error);
+    console.error("Error clearing data:", error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -134,42 +136,41 @@ async function handleClearData(sendResponse) {
 // Handle extraction from FAB button
 async function handleExtractFromFAB(tabId, sendResponse) {
   try {
-    console.log('📊 FAB extraction requested for tab:', tabId);
+    console.log("📊 FAB extraction requested for tab:", tabId);
 
     // First inject the dom-extractor script
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
-      files: ['scripts/dom-extractor.js']
+      files: ["scripts/dom-extractor.js"],
     });
 
     // Then call the extraction function
     const [extractResult] = await chrome.scripting.executeScript({
       target: { tabId: tabId },
       func: () => {
-        if (typeof window.extractGrowwStockData === 'function') {
+        if (typeof window.extractGrowwStockData === "function") {
           return window.extractGrowwStockData();
         } else {
-          throw new Error('Extraction function not found');
+          throw new Error("Extraction function not found");
         }
-      }
+      },
     });
 
     if (!extractResult || !extractResult.result) {
-      throw new Error('No data extracted');
+      throw new Error("No data extracted");
     }
 
-    console.log('✓ FAB extraction successful');
+    console.log("✓ FAB extraction successful");
 
     sendResponse({
       success: true,
-      result: extractResult.result
+      result: extractResult.result,
     });
-
   } catch (error) {
-    console.error('❌ FAB extraction error:', error);
+    console.error("❌ FAB extraction error:", error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -177,12 +178,13 @@ async function handleExtractFromFAB(tabId, sendResponse) {
 // Optional: Monitor tab updates for ChatGPT pages
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // When a ChatGPT tab finishes loading with our analysis parameter
-  if (changeInfo.status === 'complete' &&
-      tab.url &&
-      tab.url.includes('chatgpt.com') &&
-      tab.url.includes('groww_analysis=true')) {
-
-    console.log('📊 ChatGPT analysis tab loaded:', tabId);
+  if (
+    changeInfo.status === "complete" &&
+    tab.url &&
+    tab.url.includes("chatgpt.com") &&
+    tab.url.includes("groww_analysis=true")
+  ) {
+    console.log("📊 ChatGPT analysis tab loaded:", tabId);
 
     // The content script will handle the auto-injection
     // We could send additional messages here if needed
@@ -195,12 +197,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 // });
 
 // Handle errors
-self.addEventListener('error', (event) => {
-  console.error('Service worker error:', event.error);
+self.addEventListener("error", (event) => {
+  console.error("Service worker error:", event.error);
 });
 
-self.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
+self.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
 });
 
 // Keep service worker alive if needed (for long-running operations)
@@ -216,4 +218,4 @@ self.addEventListener('unhandledrejection', (event) => {
 //   }
 // });
 
-console.log('✅ Background service worker initialized successfully');
+console.log("✅ Background service worker initialized successfully");

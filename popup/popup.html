@@ -1,66 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Analyzerr</title>
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Stock Analyzerr</h1>
-      <p class="subtitle">AI-Powered Stock Insights</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Analyzerr</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Stock Analyzerr</h1>
+        <p class="subtitle">AI-Powered Stock Insights</p>
+      </div>
+
+      <div id="stock-info" class="stock-info hidden">
+        <div class="stock-name" id="stock-name">Loading...</div>
+        <div class="stock-price" id="stock-price"></div>
+        <div class="stock-change" id="stock-change"></div>
+      </div>
+
+      <div class="settings-panel">
+        <label class="toggle-container">
+          <input type="checkbox" id="auto-submit-toggle" checked />
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Auto-submit to ChatGPT</span>
+        </label>
+
+        <label class="toggle-container">
+          <input type="checkbox" id="temp-chat-toggle" />
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Use temporary chat</span>
+        </label>
+      </div>
+
+      <div id="error-message" class="error-message hidden">
+        <span class="error-icon">⚠️</span>
+        <p>Not a supported Groww stock page.</p>
+        <p class="error-hint">
+          Please navigate to a Groww stock page like:<br />
+          <code>groww.in/stocks/stock-name</code>
+        </p>
+      </div>
+
+      <div id="button-container" class="button-container">
+        <button id="extract-btn" class="btn btn-primary" disabled>
+          <span class="btn-icon">📊</span>
+          <span class="btn-text">Extract Stock Data</span>
+        </button>
+
+        <button id="analyze-btn" class="btn btn-secondary" disabled>
+          <span class="btn-icon">🤖</span>
+          <span class="btn-text">Analyze with ChatGPT</span>
+        </button>
+      </div>
+
+      <div id="status-message" class="status-message hidden"></div>
+
+      <div class="loading hidden" id="loading">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+      </div>
     </div>
 
-    <div id="stock-info" class="stock-info hidden">
-      <div class="stock-name" id="stock-name">Loading...</div>
-      <div class="stock-price" id="stock-price"></div>
-      <div class="stock-change" id="stock-change"></div>
+    <!-- Preview Modal Dialog -->
+    <div id="preview-modal" class="modal-overlay hidden">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2>📊 Extracted Stock Data</h2>
+          <button id="modal-close-btn" class="modal-close-btn" title="Close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-description">
+            This is the data that will be sent to ChatGPT for analysis:
+          </p>
+          <div class="preview-container">
+            <pre id="preview-content" class="preview-content"></pre>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="modal-copy-btn" class="btn btn-copy">
+            <span class="btn-icon">📋</span>
+            <span class="btn-text">Copy to Clipboard</span>
+          </button>
+          <button id="modal-analyze-btn" class="btn btn-primary">
+            <span class="btn-icon">🤖</span>
+            <span class="btn-text">Analyze with ChatGPT</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="settings-panel">
-      <label class="toggle-container">
-        <input type="checkbox" id="auto-submit-toggle" checked>
-        <span class="toggle-slider"></span>
-        <span class="toggle-label">Auto-submit to ChatGPT</span>
-      </label>
-
-      <label class="toggle-container">
-        <input type="checkbox" id="temp-chat-toggle">
-        <span class="toggle-slider"></span>
-        <span class="toggle-label">Use temporary chat</span>
-      </label>
-    </div>
-
-    <div id="error-message" class="error-message hidden">
-      <span class="error-icon">⚠️</span>
-      <p>Not a supported Groww stock page.</p>
-      <p class="error-hint">Please navigate to a Groww stock page like:<br>
-        <code>groww.in/stocks/stock-name</code>
-      </p>
-    </div>
-
-    <div id="button-container" class="button-container">
-      <button id="extract-btn" class="btn btn-primary" disabled>
-        <span class="btn-icon">📋</span>
-        <span class="btn-text">Extract & Copy Data</span>
-      </button>
-
-      <button id="analyze-btn" class="btn btn-secondary" disabled>
-        <span class="btn-icon">🤖</span>
-        <span class="btn-text">Analyze with ChatGPT</span>
-      </button>
-    </div>
-
-    <div id="status-message" class="status-message hidden"></div>
-
-    <div class="loading hidden" id="loading">
-      <div class="spinner"></div>
-      <p>Processing...</p>
-    </div>
-  </div>
-
-  <script src="popup.js"></script>
-</body>
+    <script src="popup.js"></script>
+  </body>
 </html>
