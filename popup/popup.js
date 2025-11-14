@@ -9,6 +9,7 @@ const analyzeBtn = document.getElementById('analyze-btn');
 const statusMessage = document.getElementById('status-message');
 const loading = document.getElementById('loading');
 const autoSubmitToggle = document.getElementById('auto-submit-toggle');
+const tempChatToggle = document.getElementById('temp-chat-toggle');
 
 let currentTabId = null;
 let extractedData = null;
@@ -18,9 +19,10 @@ document.addEventListener('DOMContentLoaded', initializePopup);
 
 async function initializePopup() {
   try {
-    // Load auto-submit preference
-    const { autoSubmit } = await chrome.storage.local.get(['autoSubmit']);
+    // Load preferences
+    const { autoSubmit, tempChat } = await chrome.storage.local.get(['autoSubmit', 'tempChat']);
     autoSubmitToggle.checked = autoSubmit !== false; // Default true
+    tempChatToggle.checked = tempChat === true; // Default false
 
     // Get current active tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -53,7 +55,7 @@ async function initializePopup() {
   }
 }
 
-// Save toggle state when changed
+// Save toggle states when changed
 autoSubmitToggle.addEventListener('change', async () => {
   const isChecked = autoSubmitToggle.checked;
   await chrome.storage.local.set({ autoSubmit: isChecked });
@@ -63,6 +65,19 @@ autoSubmitToggle.addEventListener('change', async () => {
     isChecked
       ? 'Auto-submit enabled - ChatGPT will auto-send'
       : 'Auto-submit disabled - you can review before sending',
+    'info'
+  );
+});
+
+tempChatToggle.addEventListener('change', async () => {
+  const isChecked = tempChatToggle.checked;
+  await chrome.storage.local.set({ tempChat: isChecked });
+  console.log('Temp chat preference saved:', isChecked);
+
+  showStatus(
+    isChecked
+      ? 'Temporary chat enabled - conversation won\'t be saved'
+      : 'Normal chat mode - conversation will be saved',
     'info'
   );
 });
@@ -245,22 +260,30 @@ async function handleAnalyze() {
       }
     }
 
-    // Get auto-submit preference
+    // Get preferences
     const autoSubmit = autoSubmitToggle.checked;
+    const tempChat = tempChatToggle.checked;
 
-    // Ensure data is stored with auto-submit preference
+    // Ensure data is stored with preferences
     await chrome.storage.local.set({
       growwStockData: extractedData,
       growwAnalysisRequest: true,
       autoSubmit: autoSubmit, // Pass auto-submit setting
+      tempChat: tempChat, // Pass temp-chat setting
       lastExtracted: Date.now()
     });
 
-    console.log('📊 Opening ChatGPT with auto-submit:', autoSubmit);
+    console.log('📊 Opening ChatGPT with auto-submit:', autoSubmit, 'temp-chat:', tempChat);
+
+    // Build ChatGPT URL with parameters
+    let chatGPTUrl = 'https://chatgpt.com/?groww_analysis=true';
+    if (tempChat) {
+      chatGPTUrl += '&temporary-chat=true';
+    }
 
     // Open ChatGPT in a new tab
     const tab = await chrome.tabs.create({
-      url: 'https://chatgpt.com/?groww_analysis=true',
+      url: chatGPTUrl,
       active: true
     });
 

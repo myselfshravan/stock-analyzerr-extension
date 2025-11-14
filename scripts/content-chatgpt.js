@@ -263,10 +263,70 @@ function formatAnalysisPrompt(stockData) {
 
 Here is the extracted data:`;
 
-  // Format the JSON nicely
-  const jsonData = JSON.stringify(stockData, null, 2);
+  // Convert to YAML for better token efficiency (20-30% reduction vs JSON)
+  const yamlData = jsonToYaml(stockData);
 
-  return `${preprompt}\n\n\`\`\`json\n${jsonData}\n\`\`\``;
+  return `${preprompt}\n\n\`\`\`yaml\n${yamlData}\n\`\`\``;
+}
+
+// Convert JSON to YAML format (lightweight, no dependencies)
+function jsonToYaml(obj, indent = 0) {
+  const spaces = '  '.repeat(indent);
+  let yaml = '';
+
+  if (obj === null || obj === undefined) {
+    return 'null';
+  }
+
+  if (typeof obj === 'string') {
+    // Escape special characters and add quotes if needed
+    if (obj.includes('\n') || obj.includes(':') || obj.includes('#') || obj.match(/^[\d\s]/)) {
+      return `"${obj.replace(/"/g, '\\"')}"`;
+    }
+    return obj === '' ? '""' : obj;
+  }
+
+  if (typeof obj === 'number' || typeof obj === 'boolean') {
+    return String(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) {
+      return '[]';
+    }
+    // Check if array contains simple values
+    if (obj.every(item => typeof item === 'string' || typeof item === 'number')) {
+      return '[' + obj.map(item => typeof item === 'string' ? `"${item}"` : item).join(', ') + ']';
+    }
+    // Complex array - use multi-line format
+    obj.forEach(item => {
+      yaml += `\n${spaces}- ${jsonToYaml(item, indent + 1).replace(/\n/g, `\n${spaces}  `)}`;
+    });
+    return yaml;
+  }
+
+  if (typeof obj === 'object') {
+    const keys = Object.keys(obj);
+    keys.forEach((key, index) => {
+      const value = obj[key];
+      const prefix = indent === 0 ? '\n' : (index === 0 ? '' : '\n');
+
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        yaml += `${prefix}${spaces}${key}:`;
+        const nestedYaml = jsonToYaml(value, indent + 1);
+        yaml += nestedYaml.startsWith('\n') ? nestedYaml : `\n${nestedYaml}`;
+      } else if (Array.isArray(value)) {
+        yaml += `${prefix}${spaces}${key}:`;
+        const arrayYaml = jsonToYaml(value, indent + 1);
+        yaml += arrayYaml.startsWith('\n') ? arrayYaml : ` ${arrayYaml}`;
+      } else {
+        yaml += `${prefix}${spaces}${key}: ${jsonToYaml(value, indent)}`;
+      }
+    });
+    return yaml;
+  }
+
+  return String(obj);
 }
 
 // Clean up URL parameter after successful injection

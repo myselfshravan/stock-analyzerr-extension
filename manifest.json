@@ -33,13 +33,20 @@
   "content_scripts": [
     {
       "matches": ["https://groww.in/stocks/*"],
-      "js": ["scripts/content-groww.js"],
+      "js": ["scripts/content-groww.js", "scripts/fab-injector.js"],
       "run_at": "document_end"
     },
     {
       "matches": ["https://chatgpt.com/*"],
       "js": ["scripts/content-chatgpt.js"],
       "run_at": "document_end"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["scripts/dom-extractor.js"],
+      "matches": ["https://groww.in/*"]
     }
   ],
 

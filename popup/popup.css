@@ -74,6 +74,9 @@ body {
   padding: 12px 20px;
   border-bottom: 1px solid #e2e8f0;
   background: #f7fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .toggle-container {

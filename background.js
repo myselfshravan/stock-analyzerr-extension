@@ -44,6 +44,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'extractFromFAB') {
+    handleExtractFromFAB(sender.tab.id, sendResponse);
+    return true; // Keep message channel open for async response
+  }
+
   return false;
 });
 
@@ -119,6 +124,49 @@ async function handleClearData(sendResponse) {
     });
   } catch (error) {
     console.error('Error clearing data:', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+// Handle extraction from FAB button
+async function handleExtractFromFAB(tabId, sendResponse) {
+  try {
+    console.log('📊 FAB extraction requested for tab:', tabId);
+
+    // First inject the dom-extractor script
+    await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ['scripts/dom-extractor.js']
+    });
+
+    // Then call the extraction function
+    const [extractResult] = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      func: () => {
+        if (typeof window.extractGrowwStockData === 'function') {
+          return window.extractGrowwStockData();
+        } else {
+          throw new Error('Extraction function not found');
+        }
+      }
+    });
+
+    if (!extractResult || !extractResult.result) {
+      throw new Error('No data extracted');
+    }
+
+    console.log('✓ FAB extraction successful');
+
+    sendResponse({
+      success: true,
+      result: extractResult.result
+    });
+
+  } catch (error) {
+    console.error('❌ FAB extraction error:', error);
     sendResponse({
       success: false,
       error: error.message
