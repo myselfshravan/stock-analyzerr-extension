@@ -1,16 +1,17 @@
-// Groww Stock Data Extractor - Robust Version
-// Uses semantic HTML, text matching, and structure instead of auto-generated CSS classes
-
-// === FINANCIAL CHARTS EXTRACTION (INTERACTIVE TABS) ===
-// Extracts Revenue, Profit, and Net Worth charts by clicking tabs
 async function extractFinancialCharts() {
   console.log("📊 Starting financial charts extraction...");
 
   try {
     const financialData = {};
 
-    // Find all financial tabs (Revenue, Profit, Net Worth)
-    const tabs = Array.from(document.querySelectorAll(".stkF56TabDiv"));
+    const tabs = Array.from(
+      document.querySelectorAll(
+        'div[role="tab"], button[role="tab"], [class*="Tab"]:not([class*="Table"])'
+      )
+    ).filter((tab) => {
+      const text = tab.textContent?.trim().toLowerCase();
+      return text === "revenue" || text === "profit" || text === "net worth";
+    });
 
     if (tabs.length === 0) {
       console.log("⚠️ No financial tabs found");
@@ -19,53 +20,71 @@ async function extractFinancialCharts() {
 
     console.log(`Found ${tabs.length} financial tabs`);
 
-    // Get the currency/unit note
-    const unitElement = document.querySelector(".stkF56InfoDiv");
-    const unit = unitElement
-      ? unitElement.textContent.trim().replace("*", "")
-      : "All values are in Rs. Cr";
+    const financialsSection = document.querySelector("section h2");
+    let unit = "All values are in Rs. Cr";
 
-    // Get the active mode (Quarterly vs Yearly)
-    const activeMode = document.querySelector(".stkF56ToggleActive");
+    if (
+      financialsSection &&
+      financialsSection.textContent?.toLowerCase().includes("financials")
+    ) {
+      const section = financialsSection.closest("section");
+      if (section) {
+        const unitElement = Array.from(
+          section.querySelectorAll("div, span, p")
+        ).find((el) => el.textContent?.match(/\*?all values are in/i));
+        if (unitElement) {
+          unit = unitElement.textContent.trim().replace(/^\*/, "");
+        }
+      }
+    }
+
+    const toggleButtons = Array.from(
+      document.querySelectorAll("div, button")
+    ).filter((el) => {
+      const text = el.textContent?.trim().toLowerCase();
+      return text === "quarterly" || text === "yearly";
+    });
+    const activeMode = toggleButtons.find(
+      (btn) => !btn.className.toLowerCase().includes("disabled")
+    );
     const mode = activeMode ? activeMode.textContent.trim() : "Quarterly";
 
-    // Extract data from each tab
     for (let i = 0; i < tabs.length; i++) {
       const tab = tabs[i];
-      const tabName = tab.textContent.trim(); // "Revenue", "Profit", "Net Worth"
+      const tabName = tab.textContent.trim();
 
       console.log(`Extracting ${tabName} data...`);
 
-      // Click tab if not already active
-      if (!tab.classList.contains("contentAccent")) {
+      const isActive =
+        tab.getAttribute("aria-selected") === "true" ||
+        tab.getAttribute("aria-current") === "true" ||
+        !tab.className.toLowerCase().includes("false");
+
+      if (!isActive) {
         tab.click();
-        // Wait for chart to render (500ms should be enough)
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Extract values from SVG chart
       const valueElements = Array.from(
-        document.querySelectorAll(
-          "svg text.contentPrimary.bodySmall tspan[style*='fill']"
-        )
+        document.querySelectorAll("svg text tspan[style*='fill']")
       );
       const values = valueElements
         .map((el) => el.textContent.trim())
-        .filter((text) => /^[\d,]+$/.test(text)); // Only numeric values like "6,521"
+        .filter((text) => /^-?[\d,]+$/.test(text));
 
-      // Extract date labels from x-axis
       const dateElements = Array.from(
-        document.querySelectorAll(".visx-axis-bottom tspan")
-      );
+        document.querySelectorAll('svg text[text-anchor="middle"] tspan')
+      ).filter((el) => {
+        const text = el.textContent.trim();
+        return text.match(/^(20\d{2}|FY\s?\d{2}|\w{3}\s['\']?\d{2})$/);
+      });
       const dates = dateElements.map((el) => el.textContent.trim());
 
-      // Create data points array combining dates and values
       const dataPoints = values.map((val, idx) => ({
         date: dates[idx] || "",
         value: val,
       }));
 
-      // Store data for this tab
       financialData[tabName] = {
         values: values,
         dates: dates,
@@ -78,7 +97,6 @@ async function extractFinancialCharts() {
       );
     }
 
-    // Add metadata
     financialData._metadata = {
       unit: unit,
       mode: mode,
@@ -101,13 +119,11 @@ window.extractGrowwStockData = async function (options = {}) {
     url: window.location.href,
     extractedAt: new Date().toLocaleString(),
 
-    // Basic Information (using robust extraction)
     stockName: extractStockName(),
     symbol: extractSymbolFromURL(),
     currentPrice: extractCurrentPrice(),
     dayChange: extractDayChange(),
 
-    // Stock Performance Metrics (Open, Close, Volume, Circuits)
     open: extractKeyValue("Open"),
     previousClose: extractKeyValue(
       "Prev. Close",
@@ -123,7 +139,6 @@ window.extractGrowwStockData = async function (options = {}) {
     upperCircuit: extractKeyValue("Upper Circuit"),
     lowerCircuit: extractKeyValue("Lower Circuit"),
 
-    // Key Metrics (using text-based key-value extraction)
     marketCap: extractKeyValue(
       "Market Cap",
       "Mkt cap",
@@ -142,12 +157,10 @@ window.extractGrowwStockData = async function (options = {}) {
     eps: extractKeyValue("EPS", "Earnings Per Share"),
     faceValue: extractKeyValue("Face Value"),
 
-    // Price Metrics
     week52High: extractKeyValue("52W High", "52 Week High", "52WH"),
     week52Low: extractKeyValue("52W Low", "52 Week Low", "52WL"),
     avgVolume: extractKeyValue("Avg Volume", "Average Volume"),
 
-    // Financial Metrics
     revenue: extractFinancialData("Revenue", "Total Revenue"),
     profit: extractFinancialData("Net Profit", "Profit"),
     sales: extractFinancialData("Sales"),
@@ -159,17 +172,14 @@ window.extractGrowwStockData = async function (options = {}) {
       "Promoter %"
     ),
 
-    // Additional Information
     industry: extractKeyValue("Industry", "Sector"),
     about: extractAbout(),
     pros: extractList("pros"),
     cons: extractList("cons"),
 
-    // All tables data (fallback to capture everything)
     allTables: extractAllTables(),
   };
 
-  // EXTRACT FINANCIAL CHARTS (if enabled)
   if (options.extractFinancials) {
     console.log("📊 Financial charts extraction enabled");
     const financialCharts = await extractFinancialCharts();
@@ -178,7 +188,6 @@ window.extractGrowwStockData = async function (options = {}) {
     }
   }
 
-  // VALIDATE MANDATORY FIELDS
   const mandatoryFields = {
     stockName: data.stockName,
     currentPrice: data.currentPrice,
@@ -207,17 +216,12 @@ window.extractGrowwStockData = async function (options = {}) {
   return { error: false, data };
 };
 
-// === ROBUST EXTRACTION FUNCTIONS (NO CSS CLASSES) ===
-
-// Extract stock name from h1 tag (semantic HTML)
 function extractStockName() {
-  // Strategy 1: First h1 on page
   const h1 = document.querySelector("h1");
   if (h1 && h1.innerText && h1.innerText.length > 2) {
     return h1.innerText.trim();
   }
 
-  // Strategy 2: Element with title attribute
   const titleEl = document.querySelector("[title]");
   if (titleEl) {
     const title = titleEl.getAttribute("title");
@@ -226,12 +230,10 @@ function extractStockName() {
     }
   }
 
-  // Strategy 3: Look for company name pattern in meta tags
   const metaTitle = document.querySelector('meta[property="og:title"]');
   if (metaTitle) {
     const content = metaTitle.getAttribute("content");
     if (content) {
-      // Remove common suffixes
       return content.replace(/ - Groww| Share Price| Stock Price/gi, "").trim();
     }
   }
@@ -239,26 +241,21 @@ function extractStockName() {
   return "N/A";
 }
 
-// Extract current price using multiple strategies
 function extractCurrentPrice() {
   console.log("🔍 Extracting current price...");
 
-  // Strategy 1: Find by rupee symbol pattern in first 3000 characters
   const topText = document.body.innerText.substring(0, 3000);
   const pricePattern = /₹\s*([0-9,]+\.?[0-9]*)/g;
   const matches = [...topText.matchAll(pricePattern)];
 
   if (matches.length > 0) {
-    // First match is usually the current price
     const price = matches[0][1];
     console.log("✓ Found price via pattern:", price);
     return "₹" + price;
   }
 
-  // Strategy 2: Find largest font size with rupee symbol
   const allDivs = Array.from(document.querySelectorAll("div"));
   for (const div of allDivs.slice(0, 100)) {
-    // Check first 100 divs
     const text = div.innerText?.trim();
     if (text && text.startsWith("₹") && /^₹\s*[0-9,]+\.?[0-9]*$/.test(text)) {
       console.log("✓ Found price via div scan:", text);
@@ -266,7 +263,6 @@ function extractCurrentPrice() {
     }
   }
 
-  // Strategy 3: Look for price in data attributes
   const priceEl = document.querySelector("[data-price], [data-current-price]");
   if (priceEl) {
     const price =
@@ -282,19 +278,15 @@ function extractCurrentPrice() {
   return "N/A";
 }
 
-// Extract day change
 function extractDayChange() {
-  // Look for patterns like "+6.36 (4.84%)" or "-2.5 (1.2%)"
   const pageText = document.body.innerText;
   const changePattern = /([+\-]?\s*[0-9]+\.?[0-9]*\s*\([0-9]+\.?[0-9]*%\))/g;
   const matches = pageText.match(changePattern);
 
   if (matches && matches.length > 0) {
-    // First match is usually the day change
     return matches[0].trim();
   }
 
-  // Fallback: Look for green/red text with percentage
   const allSpans = Array.from(document.querySelectorAll("span, div"));
   for (const span of allSpans.slice(0, 50)) {
     const text = span.innerText?.trim();
@@ -311,9 +303,7 @@ function extractDayChange() {
   return "N/A";
 }
 
-// Extract key-value pairs by searching for label text
 function extractKeyValue(...labels) {
-  // Get all text-containing elements
   const allElements = Array.from(
     document.querySelectorAll("td, div, span, p, th, label")
   );
@@ -322,24 +312,20 @@ function extractKeyValue(...labels) {
     for (const element of allElements) {
       const elementText = element.innerText?.trim();
 
-      // Check for exact match or contains
       if (
         elementText === label ||
         elementText?.toLowerCase() === label.toLowerCase()
       ) {
-        // Strategy 1: Next sibling
         let valueEl = element.nextElementSibling;
         if (valueEl && valueEl.innerText && valueEl.innerText.trim()) {
           return valueEl.innerText.trim();
         }
 
-        // Strategy 2: Parent's next sibling
         valueEl = element.parentElement?.nextElementSibling;
         if (valueEl && valueEl.innerText && valueEl.innerText.trim()) {
           return valueEl.innerText.trim();
         }
 
-        // Strategy 3: Next cell in table row
         const row = element.closest("tr");
         if (row) {
           const cells = Array.from(row.querySelectorAll("td, th"));
@@ -347,13 +333,11 @@ function extractKeyValue(...labels) {
           if (labelIndex >= 0 && cells[labelIndex + 1]) {
             return cells[labelIndex + 1].innerText.trim();
           }
-          // Or just get last cell
           if (cells.length >= 2) {
             return cells[cells.length - 1].innerText.trim();
           }
         }
 
-        // Strategy 4: Value in same div (colon-separated)
         if (elementText.includes(":")) {
           const parts = elementText.split(":");
           if (
@@ -367,15 +351,13 @@ function extractKeyValue(...labels) {
     }
   }
 
-  // Strategy 5: Text pattern search
   const pageText = document.body.innerText;
   for (const label of labels) {
     const pattern = new RegExp(`${label}\\s*[:\\-]?\\s*([^\n]+)`, "i");
     const match = pageText.match(pattern);
     if (match && match[1]) {
-      const value = match[1].trim().split(/\s{2,}/)[0]; // Take first word/phrase
+      const value = match[1].trim().split(/\s{2,}/)[0];
       if (value && value.length < 100) {
-        // Reasonable length
         return value;
       }
     }
@@ -384,7 +366,6 @@ function extractKeyValue(...labels) {
   return "N/A";
 }
 
-// Extract financial data from tables
 function extractFinancialData(...labels) {
   const tables = document.querySelectorAll("table");
 
@@ -400,13 +381,12 @@ function extractFinancialData(...labels) {
           firstCell &&
           firstCell.innerText.toLowerCase().includes(label.toLowerCase())
         ) {
-          // Get all values from this row (multiple years of data)
           const values = Array.from(cells)
             .slice(1)
             .map((cell) => cell.innerText.trim())
             .filter((v) => v);
           if (values.length > 0) {
-            return values.join(" | "); // Return all yearly data
+            return values.join(" | ");
           }
         }
       }
@@ -416,37 +396,30 @@ function extractFinancialData(...labels) {
   return "N/A";
 }
 
-// Extract company description/about
 function extractAbout() {
-  // Strategy 1: Find "About" heading and extract from nested structure
   const aboutHeading = Array.from(
     document.querySelectorAll("h1, h2, h3, h4")
   ).find((h) => h.innerText && h.innerText.toLowerCase().includes("about"));
 
   if (aboutHeading) {
-    // Get parent section if exists
-    const section = aboutHeading.closest("section");
+    const section = aboutHeading.closest("section, div");
     if (section) {
-      // Look for text in .rah-static span (full text container)
       const fullTextSpan = section.querySelector(
-        '.rah-static span, [class*="rah-static"] span'
+        '[class*="static"] span, [class*="expanded"] span'
       );
       if (
         fullTextSpan &&
         fullTextSpan.innerText &&
         fullTextSpan.innerText.length > 100
       ) {
-        // Remove "Read more" button text if present
         let text = fullTextSpan.innerText.trim();
         text = text.replace(/\.\.\.Read more$/i, "").trim();
         return text;
       }
 
-      // Fallback: Find any span/p with substantial text in this section
       const textElements = Array.from(section.querySelectorAll("span, p, div"))
         .filter((el) => {
           const text = el.innerText?.trim();
-          // Must have text > 100 chars and not contain child elements with lots of text (avoid containers)
           return text && text.length > 100 && !el.querySelector("table");
         })
         .sort((a, b) => b.innerText.length - a.innerText.length);
@@ -459,14 +432,12 @@ function extractAbout() {
     }
   }
 
-  // Strategy 2: Look for aboutCompany_summary or similar class patterns
   const aboutSection = document.querySelector(
-    '[class*="aboutCompany"], [class*="about-company"], [class*="company-summary"]'
+    '[class*="about"], [class*="company"], section'
   );
   if (aboutSection) {
-    // Try .rah-static span first (full text)
     const fullText = aboutSection.querySelector(
-      '.rah-static span, [class*="rah-static"] span'
+      '[class*="static"] span, [class*="expanded"] span'
     );
     if (fullText && fullText.innerText && fullText.innerText.length > 100) {
       let text = fullText.innerText.trim();
@@ -474,7 +445,6 @@ function extractAbout() {
       return text;
     }
 
-    // Fallback: longest span in this section
     const spans = Array.from(aboutSection.querySelectorAll("span")).filter(
       (s) => s.innerText && s.innerText.length > 100
     );
@@ -486,11 +456,9 @@ function extractAbout() {
     }
   }
 
-  // Strategy 3: Look for longest span or paragraph (expanded beyond just <p>)
   const textElements = Array.from(document.querySelectorAll("span, p, div"))
     .filter((el) => {
       const text = el.innerText?.trim();
-      // Filter: meaningful length, not a container with tables/lists
       return text && text.length > 150 && !el.querySelector("table, ul, ol");
     })
     .sort((a, b) => b.innerText.length - a.innerText.length);
@@ -504,15 +472,12 @@ function extractAbout() {
   return "N/A";
 }
 
-// Extract pros/cons lists
 function extractList(type) {
-  // Look for headings with pros/cons
   const allElements = Array.from(document.querySelectorAll("*"));
 
   for (const el of allElements) {
     const text = el.innerText?.toLowerCase();
     if (text && text.includes(type)) {
-      // Look for list items nearby
       const parent = el.closest("div, section");
       if (parent) {
         const listItems = parent.querySelectorAll("li, p");
@@ -528,14 +493,12 @@ function extractList(type) {
   return [];
 }
 
-// Extract symbol from URL
 function extractSymbolFromURL() {
   const pathParts = window.location.pathname.split("/");
   const symbol = pathParts[pathParts.length - 1];
   return symbol || "N/A";
 }
 
-// Extract all tables as fallback
 function extractAllTables() {
   const tables = document.querySelectorAll("table");
   const tablesData = [];
@@ -551,7 +514,6 @@ function extractAllTables() {
       const cells = Array.from(row.querySelectorAll("td, th"));
       const rowData = cells.map((cell) => cell.innerText.trim());
       if (rowData.some((cell) => cell)) {
-        // Only add non-empty rows
         tableData.rows.push(rowData);
       }
     });
@@ -560,7 +522,7 @@ function extractAllTables() {
       tablesData.push(tableData);
     }
   });
-  // remove the last table if the first row first column contains "COMPANY"
+
   if (tablesData.length > 0) {
     const lastTable = tablesData[tablesData.length - 1];
     if (
@@ -574,7 +536,6 @@ function extractAllTables() {
   return tablesData;
 }
 
-// Export for use
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { extractGrowwStockData: window.extractGrowwStockData };
 }

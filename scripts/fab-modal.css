@@ -98,6 +98,29 @@
   gap: 12px;
 }
 
+.fab-stock-info {
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  margin-bottom: 8px;
+}
+
+.fab-stock-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 6px;
+}
+
+.fab-stock-symbol {
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .fab-modal-description {
   font-size: 14px;
   color: #4a5568;

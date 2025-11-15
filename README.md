@@ -1,4 +1,4 @@
-# 🚀 Stock Analyzerr - AI Stock Insights
+# 🚀 Stock Analyzer - AI Stock Insights
 
 > **Instantly analyze any Groww stock with AI-powered insights from ChatGPT**
 
@@ -17,32 +17,65 @@ A powerful Chrome Extension that extracts comprehensive stock data from Groww.in
 
 ## ✨ Features
 
+### Core Features
 - **📊 Smart Data Extraction**: Automatically scrapes comprehensive stock data from any Groww stock page
 - **🤖 AI-Powered Analysis**: Sends extracted data to ChatGPT with a pre-formatted analysis prompt
 - **⚡ One-Click Operation**: Extract, copy, and analyze stock data with a single click
 - **🔒 Privacy-First**: All data processed locally, no external servers
-- **🎯 Zero Manual Work**: ChatGPT auto-fills and submits the analysis request
-- **📋 Clipboard Support**: Instantly copy extracted JSON data to clipboard
+- **📋 Clipboard Support**: Instantly copy extracted YAML data to clipboard
+
+### Advanced Features
+- **📈 Financial Charts Extraction**: Extract Revenue, Profit, and Net Worth trends (opt-in)
+- **🎯 Preview Modal**: Review extracted data before sending to ChatGPT
+- **🔮 Floating Action Button (FAB)**: Quick access from any Groww stock page
+- **💾 YAML Format**: 20-30% more token-efficient than JSON
+- **⚙️ Smart Settings**:
+  - Auto-submit toggle (paste and auto-send to ChatGPT)
+  - Temporary chat mode (analyze without cluttering history)
+  - Financial charts toggle (extract charts on demand)
+- **🛡️ Race Condition Prevention**: Preview modal ensures data is ready before sending
 
 ---
 
 ## 📸 How It Works
 
-### Step 1: Visit any Groww Stock Page
-Navigate to any stock on Groww.in (e.g., `https://groww.in/stocks/hindustan-aeronautics-ltd`)
+### Method 1: Extension Popup
 
-### Step 2: Click Extension Icon
-Open the extension popup and see basic stock information
+1. **Visit any Groww Stock Page**: Navigate to any stock on Groww.in (e.g., `https://groww.in/stocks/hindustan-aeronautics-ltd`)
 
-### Step 3: Extract & Copy (Optional)
-Click "Extract & Copy Data" to copy full JSON data to clipboard
+2. **Open Extension Popup**: Click the extension icon to see:
+   - Stock name and current price
+   - Day change percentage
+   - Settings toggles (auto-submit, temp chat, financial charts)
 
-### Step 4: Analyze with ChatGPT
-Click "Analyze with ChatGPT" and watch the magic:
-- ChatGPT opens in a new tab
-- Stock data is auto-pasted with analysis prompt
-- Message is auto-submitted
-- AI analysis appears instantly
+3. **Extract Stock Data** (Preview Mode):
+   - Click **"Extract Stock Data"** button
+   - Preview modal shows extracted YAML data
+   - Review the data or copy to clipboard
+   - Click **"Analyze with ChatGPT"** from modal to proceed
+
+4. **Analyze with ChatGPT** (Direct Mode):
+   - Click **"Analyze with ChatGPT"** button directly
+   - ChatGPT opens in a new tab
+   - Stock data is auto-pasted with analysis prompt
+   - Message is auto-submitted (if auto-submit is enabled)
+   - AI analysis appears instantly
+
+### Method 2: Floating Action Button (FAB)
+
+1. **Navigate to Groww Stock Page**: Any stock page will show a purple floating button in the bottom-right corner
+
+2. **Click the FAB Button**:
+   - Data extraction starts immediately
+   - Loading animation shows progress
+
+3. **Review in Modal**:
+   - Preview modal appears with YAML data
+   - Options to copy or analyze with ChatGPT
+
+4. **Choose Your Action**:
+   - **Copy to Clipboard**: Get the YAML data for manual use
+   - **Analyze with ChatGPT**: Opens ChatGPT with the data
 
 ---
 
@@ -113,37 +146,60 @@ The extension will be available on the Chrome Web Store soon!
 
 ## 📊 Extracted Data Points
 
-The extension captures comprehensive stock information:
+The extension captures comprehensive stock information in **YAML format** (20-30% more token-efficient than JSON):
 
 ### Basic Information
 - Stock name and symbol
 - Current price
 - Day change (% and absolute)
+- Open, Previous Close, Volume, Total Traded Value
+- Upper/Lower Circuit limits
 
 ### Key Metrics
 - Market capitalization
-- P/E ratio, P/B ratio
-- Book value
+- P/E ratio, Book Value
 - Dividend yield
 - ROE, ROCE, EPS
 - Face value
 
 ### Financial Data
-- Revenue
-- Net profit
-- Sales figures
-- Debt to equity ratio
+- Revenue, Net Profit, Sales
+- Debt to Equity ratio
 - Current ratio
+- Promoter holding percentage
 
 ### Price Information
 - 52-week high/low
-- Volume and average volume
+- Average volume
+
+###  Financial Charts (Optional - Enable in Settings)
+When "Extract financial charts" is enabled, the extension will also extract:
+
+- **Revenue Trends**: Quarterly/Yearly revenue data with dates
+- **Profit Trends**: Net profit trends over time
+- **Net Worth Trends**: Company net worth progression
+- **Metadata**: Units (Rs. Cr), Mode (Quarterly/Yearly), extraction timestamp
+
+Example format:
+```yaml
+financialCharts:
+  Revenue:
+    values: ["6,521", "7,588", "14,353", "5,568", "7,517"]
+    dates: ["Sep '24", "Dec '24", "Mar '25", "Jun '25", "Sep '25"]
+    dataPoints:
+      - date: "Sep '24"
+        value: "6,521"
+  Profit: {...}
+  Net Worth: {...}
+  _metadata:
+    unit: "All values are in Rs. Cr"
+    mode: "Quarterly"
+```
 
 ### Qualitative Data
-- Company description
+- Company description (About section)
 - Industry and sector
 - Pros and cons (if available)
-- Shareholding patterns
 
 ### Additional Data
 - All table data from the page

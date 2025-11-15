@@ -1,15 +1,11 @@
-// Content script for Groww stock pages
-// This script runs automatically on all Groww stock pages
-
 console.log("Groww content script loaded on:", window.location.href);
 
-// Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("Message received in Groww content script:", message);
 
   if (message.action === "extractData") {
     handleExtraction(sendResponse);
-    return true; // Keep the message channel open for async response
+    return true;
   }
 
   if (message.action === "getBasicInfo") {
@@ -21,26 +17,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// Handle data extraction
 async function handleExtraction(sendResponse) {
   try {
-    // Check if extraction function is available
     if (typeof window.extractGrowwStockData !== "function") {
-      // Load the extraction script
       const script = document.createElement("script");
       script.src = chrome.runtime.getURL("scripts/dom-extractor.js");
       document.head.appendChild(script);
 
-      // Wait for script to load
       await new Promise((resolve) => {
         script.onload = resolve;
       });
     }
 
-    // Execute extraction
     const stockData = window.extractGrowwStockData();
 
-    // Store in chrome.storage
     await chrome.storage.local.set({
       growwStockData: stockData,
       lastExtracted: Date.now(),
@@ -61,7 +51,6 @@ async function handleExtraction(sendResponse) {
   }
 }
 
-// Get basic stock info for popup display
 function getBasicStockInfo() {
   const info = {
     name: "Stock",
@@ -69,12 +58,10 @@ function getBasicStockInfo() {
     change: "",
   };
 
-  // Try multiple selectors for stock name
   const nameSelectors = [
-    "h1.usph14Head",
     'h1[class*="stock"]',
     "h1",
-    ".stock-name",
+    "[data-testid='stock-name']",
   ];
 
   for (const selector of nameSelectors) {
@@ -85,12 +72,7 @@ function getBasicStockInfo() {
     }
   }
 
-  // Try to get price
-  const priceSelectors = [
-    "span.uht141Pri",
-    '[class*="price"]',
-    '[data-testid="current-price"]',
-  ];
+  const priceSelectors = ['[class*="price"]', '[data-testid="current-price"]'];
 
   for (const selector of priceSelectors) {
     const element = document.querySelector(selector);
@@ -100,12 +82,7 @@ function getBasicStockInfo() {
     }
   }
 
-  // Try to get change
-  const changeSelectors = [
-    "div.uht141Day",
-    '[class*="change"]',
-    '[data-testid="day-change"]',
-  ];
+  const changeSelectors = ['[class*="change"]', '[data-testid="day-change"]'];
 
   for (const selector of changeSelectors) {
     const element = document.querySelector(selector);
@@ -118,10 +95,7 @@ function getBasicStockInfo() {
   return info;
 }
 
-// Optional: Auto-extract on page load and cache the data
-// This makes the popup faster
 (function autoCache() {
-  // Wait for page to be fully loaded
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", performAutoCache);
   } else {
@@ -130,15 +104,12 @@ function getBasicStockInfo() {
 })();
 
 async function performAutoCache() {
-  // Check if we should auto-cache (don't do it too frequently)
   const { lastExtracted } = await chrome.storage.local.get(["lastExtracted"]);
   const now = Date.now();
 
-  // Only auto-cache if last extraction was more than 5 minutes ago
   if (!lastExtracted || now - lastExtracted > 5 * 60 * 1000) {
     console.log("Auto-caching stock data...");
 
-    // Give the page time to load (wait 2 seconds)
     setTimeout(async () => {
       try {
         if (typeof window.extractGrowwStockData === "function") {
