@@ -178,6 +178,7 @@ window.extractGrowwStockData = async function (options = {}) {
     cons: extractList("cons"),
 
     allTables: extractAllTables(),
+    shareholdingPattern: extractShareholdingPattern(),
   };
 
   if (options.extractFinancials) {
@@ -534,6 +535,64 @@ function extractAllTables() {
   }
 
   return tablesData;
+}
+
+function extractShareholdingPattern() {
+  console.log("📊 Extracting Shareholding Pattern...");
+
+  // Find the Shareholding Pattern heading
+  const heading = Array.from(
+    document.querySelectorAll("h1, h2, h3, div, span")
+  ).find((el) => el.innerText?.trim().toLowerCase() === "shareholding pattern");
+
+  if (!heading) {
+    console.warn("⚠️ Shareholding Pattern heading not found");
+    return null;
+  }
+
+  // The section containing entries
+  const container =
+    heading.parentElement?.parentElement || heading.closest("section, div");
+
+  if (!container) {
+    console.warn("⚠️ Could not locate Shareholding Pattern container");
+    return null;
+  }
+
+  // All immediate children that look like rows
+  const rowBlocks = Array.from(container.querySelectorAll("div")).filter(
+    (block) => {
+      const text = block.innerText?.trim();
+      if (!text) return false;
+
+      // exclude date row
+      if (text.match(/(Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*'\d{2}/)) {
+        return false;
+      }
+
+      // must contain one label and one value
+      const parts = text.split("\n").map((t) => t.trim());
+      return parts.length === 2 && parts[1].includes("%");
+    }
+  );
+
+  if (rowBlocks.length === 0) {
+    console.warn("⚠️ No shareholding rows found");
+    return null;
+  }
+
+  const result = {};
+
+  rowBlocks.forEach((block) => {
+    const parts = block.innerText.split("\n").map((t) => t.trim());
+    if (parts.length === 2) {
+      const [key, val] = parts;
+      result[key] = val;
+    }
+  });
+
+  console.log("✅ Extracted Shareholding Pattern:", result);
+  return result;
 }
 
 if (typeof module !== "undefined" && module.exports) {
