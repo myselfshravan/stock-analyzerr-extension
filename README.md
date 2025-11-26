@@ -6,20 +6,25 @@ A powerful Chrome Extension that extracts comprehensive stock data from Groww.in
 
 ## 🎬 Demo Video
 
-See the extension in action:
+**[▶️ Watch the Extension in Action](https://cap.so/c/0d3rgyrbfpwvv6t)**
 
-<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 20px 0;">
-  <iframe 
-    src="https://cap.so/embed/0d3rgyrbfpwvv6t" 
-    frameborder="0" 
-    webkitallowfullscreen 
-    mozallowfullscreen 
-    allowfullscreen 
-    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  </iframe>
-</div>
+[![Demo Video](https://img.shields.io/badge/🎥_Demo-Watch_Now-red?style=for-the-badge&logo=youtube&logoColor=white)](https://cap.so/c/0d3rgyrbfpwvv6t)
 
-*Watch how to extract stock data from Groww and analyze it with ChatGPT in seconds!*
+> 📹 **See how to extract stock data from Groww and analyze it with ChatGPT in seconds!**
+> 
+> Click the link above to watch the full demo video showcasing:
+> - ✅ One-click data extraction from any Groww stock page
+> - ✅ Automatic ChatGPT analysis with pre-formatted prompts
+> - ✅ Real-time AI insights and recommendations
+
+---
+
+### 🎯 Quick Demo Preview
+```
+🔗 Visit: groww.in/stocks/any-company
+🖱️ Click: Extension icon → "Analyze with ChatGPT"
+⚡ Result: Instant AI analysis in ChatGPT
+```
 
 ---
 
