@@ -1,4 +1,3 @@
-// DOM Elements
 const stockInfo = document.getElementById("stock-info");
 const stockName = document.getElementById("stock-name");
 const stockPrice = document.getElementById("stock-price");
@@ -14,7 +13,6 @@ const extractFinancialsToggle = document.getElementById(
   "extract-financials-toggle"
 );
 
-// Modal Elements
 const previewModal = document.getElementById("preview-modal");
 const previewContent = document.getElementById("preview-content");
 const modalCloseBtn = document.getElementById("modal-close-btn");
@@ -24,30 +22,26 @@ const modalAnalyzeBtn = document.getElementById("modal-analyze-btn");
 let currentTabId = null;
 let extractedData = null;
 
-// Initialize popup
 document.addEventListener("DOMContentLoaded", initializePopup);
 
 async function initializePopup() {
   try {
-    // Load preferences
     const { autoSubmit, tempChat, extractFinancials } =
       await chrome.storage.local.get([
         "autoSubmit",
         "tempChat",
         "extractFinancials",
       ]);
-    autoSubmitToggle.checked = autoSubmit !== false; // Default true
-    tempChatToggle.checked = tempChat === true; // Default false
-    extractFinancialsToggle.checked = extractFinancials === true; // Default false
+    autoSubmitToggle.checked = autoSubmit !== false;
+    tempChatToggle.checked = tempChat === true;
+    extractFinancialsToggle.checked = extractFinancials === true;
 
-    // Get current active tab
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true,
     });
     currentTabId = tab.id;
 
-    // Check if we're on a Groww stock page
     const isGrowwStock =
       tab.url && tab.url.match(/^https:\/\/groww\.in\/stocks\/.+/);
 
@@ -56,14 +50,11 @@ async function initializePopup() {
       return;
     }
 
-    // We're on a Groww page, enable UI
     hideError();
     showLoading(true);
 
-    // Try to get basic stock info to display
     await getBasicStockInfo(tab.id);
 
-    // Enable buttons
     extractBtn.disabled = false;
     analyzeBtn.disabled = false;
 
@@ -75,7 +66,6 @@ async function initializePopup() {
   }
 }
 
-// Save toggle states when changed
 autoSubmitToggle.addEventListener("change", async () => {
   const isChecked = autoSubmitToggle.checked;
   await chrome.storage.local.set({ autoSubmit: isChecked });
@@ -120,12 +110,10 @@ async function getBasicStockInfo(tabId) {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tabId },
       func: () => {
-        // Try multiple possible selectors for stock name
         const nameSelectors = [
           'h1[class*="stock"]',
           "h1",
-          ".stock-name",
-          '[data-testid="stock-name"]',
+          "[data-testid='stock-name']",
         ];
 
         let name = "Stock";
@@ -137,7 +125,6 @@ async function getBasicStockInfo(tabId) {
           }
         }
 
-        // Try to get price
         const priceSelectors = [
           '[class*="price"]',
           '[data-testid="current-price"]',
@@ -152,7 +139,6 @@ async function getBasicStockInfo(tabId) {
           }
         }
 
-        // Try to get change
         const changeSelectors = [
           '[class*="change"]',
           '[data-testid="day-change"]',
@@ -182,7 +168,6 @@ async function getBasicStockInfo(tabId) {
 
       if (change) {
         stockChange.textContent = change;
-        // Add positive/negative class based on content
         if (change.includes("+") || change.includes("▲")) {
           stockChange.classList.add("positive");
         } else if (change.includes("-") || change.includes("▼")) {
@@ -194,20 +179,16 @@ async function getBasicStockInfo(tabId) {
     }
   } catch (error) {
     console.error("Error getting stock info:", error);
-    // Don't show error, just don't display the info
   }
 }
 
-// Button Event Listeners
 extractBtn.addEventListener("click", handleExtract);
 analyzeBtn.addEventListener("click", handleAnalyze);
 
-// Modal Event Listeners
 modalCloseBtn.addEventListener("click", hidePreviewModal);
 modalCopyBtn.addEventListener("click", handleModalCopy);
 modalAnalyzeBtn.addEventListener("click", handleModalAnalyze);
 
-// Close modal when clicking outside
 previewModal.addEventListener("click", (e) => {
   if (e.target === previewModal) {
     hidePreviewModal();
@@ -216,7 +197,6 @@ previewModal.addEventListener("click", (e) => {
 
 async function handleExtract() {
   try {
-    // CLEAR OLD DATA FIRST to prevent stale data
     console.log("🗑️ Clearing old stock data from storage...");
     await chrome.storage.local.remove([
       "growwStockData",
@@ -226,18 +206,15 @@ async function handleExtract() {
     showLoading(true);
     extractBtn.disabled = true;
 
-    // Get extractFinancials preference
     const { extractFinancials } = await chrome.storage.local.get([
       "extractFinancials",
     ]);
 
-    // Execute the extraction script
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       files: ["scripts/dom-extractor.js"],
     });
 
-    // Now call the extraction function with options
     const [extractResult] = await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       func: (options) => {
@@ -253,19 +230,16 @@ async function handleExtract() {
     if (extractResult && extractResult.result) {
       const result = extractResult.result;
 
-      // CHECK FOR VALIDATION ERRORS
       if (result.error) {
         console.error("❌ Extraction validation failed:", result.message);
         showStatus(`❌ ${result.message}`, "error");
         showLoading(false);
         extractBtn.disabled = false;
-        return; // Don't proceed
+        return;
       }
 
-      // Success - use result.data
       extractedData = result.data;
 
-      // Store in chrome.storage
       await chrome.storage.local.set({
         growwStockData: extractedData,
         lastExtracted: Date.now(),
@@ -274,7 +248,6 @@ async function handleExtract() {
       showLoading(false);
       extractBtn.disabled = false;
 
-      // Show preview modal instead of copying directly
       showPreviewModal(extractedData);
     } else {
       throw new Error("No data extracted");
@@ -292,19 +265,16 @@ async function handleAnalyze() {
     showLoading(true);
     analyzeBtn.disabled = true;
 
-    // CLEAR OLD DATA FIRST to prevent stale data
     console.log("🗑️ Clearing old stock data from storage...");
     await chrome.storage.local.remove([
       "growwStockData",
       "growwAnalysisRequest",
     ]);
 
-    // Get extractFinancials preference
     const { extractFinancials } = await chrome.storage.local.get([
       "extractFinancials",
     ]);
 
-    // Always perform fresh extraction for "Analyze" button
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       files: ["scripts/dom-extractor.js"],
@@ -325,7 +295,6 @@ async function handleAnalyze() {
     if (extractResult && extractResult.result) {
       const result = extractResult.result;
 
-      // CHECK FOR VALIDATION ERRORS
       if (result.error) {
         console.error("❌ Extraction validation failed:", result.message);
         showStatus(`❌ ${result.message}`, "error");
@@ -334,14 +303,11 @@ async function handleAnalyze() {
         return;
       }
 
-      // Success - use result.data
       extractedData = result.data;
 
-      // Get user preferences
       const autoSubmit = autoSubmitToggle.checked;
       const tempChat = tempChatToggle.checked;
 
-      // Store in chrome.storage with preferences
       await chrome.storage.local.set({
         growwStockData: extractedData,
         growwAnalysisRequest: true,
@@ -350,13 +316,11 @@ async function handleAnalyze() {
         lastExtracted: Date.now(),
       });
 
-      // Build ChatGPT URL with parameters
       let chatGPTUrl = "https://chatgpt.com/?groww_analysis=true";
       if (tempChat) {
         chatGPTUrl += "&temporary-chat=true";
       }
 
-      // Open ChatGPT directly
       await chrome.tabs.create({
         url: chatGPTUrl,
         active: true,
@@ -372,7 +336,6 @@ async function handleAnalyze() {
         "success"
       );
 
-      // Close popup after a short delay
       setTimeout(() => {
         window.close();
       }, 1000);
@@ -387,7 +350,6 @@ async function handleAnalyze() {
   }
 }
 
-// UI Helper Functions
 function showError() {
   errorMessage.classList.remove("hidden");
   stockInfo.classList.add("hidden");
@@ -412,20 +374,16 @@ function showStatus(message, type = "info") {
   statusMessage.className = `status-message ${type}`;
   statusMessage.classList.remove("hidden");
 
-  // Auto-hide after 5 seconds
   setTimeout(() => {
     statusMessage.classList.add("hidden");
   }, 5000);
 }
 
-// Modal Helper Functions
 function showPreviewModal(data) {
-  // Convert data to YAML for display
   const yamlData = jsonToYaml(data);
   previewContent.textContent = yamlData;
   previewModal.classList.remove("hidden");
 
-  // Store the data for modal actions
   extractedData = data;
 }
 
@@ -437,7 +395,6 @@ async function handleModalCopy() {
   try {
     const yamlData = jsonToYaml(extractedData);
 
-    // Copy YAML to clipboard
     await chrome.scripting.executeScript({
       target: { tabId: currentTabId },
       world: "MAIN",
@@ -459,11 +416,9 @@ async function handleModalCopy() {
 
 async function handleModalAnalyze() {
   try {
-    // Get preferences
     const autoSubmit = autoSubmitToggle.checked;
     const tempChat = tempChatToggle.checked;
 
-    // Ensure data is stored with preferences
     await chrome.storage.local.set({
       growwStockData: extractedData,
       growwAnalysisRequest: true,
@@ -479,19 +434,16 @@ async function handleModalAnalyze() {
       tempChat
     );
 
-    // Build ChatGPT URL with parameters
     let chatGPTUrl = "https://chatgpt.com/?groww_analysis=true";
     if (tempChat) {
       chatGPTUrl += "&temporary-chat=true";
     }
 
-    // Open ChatGPT in a new tab
     await chrome.tabs.create({
       url: chatGPTUrl,
       active: true,
     });
 
-    // Hide modal
     hidePreviewModal();
 
     showStatus(
@@ -501,7 +453,6 @@ async function handleModalAnalyze() {
       "success"
     );
 
-    // Close popup after a short delay
     setTimeout(() => {
       window.close();
     }, 1000);
@@ -511,7 +462,6 @@ async function handleModalAnalyze() {
   }
 }
 
-// Convert JSON to YAML format (lightweight, no dependencies)
 function jsonToYaml(obj, indent = 0) {
   const spaces = "  ".repeat(indent);
   let yaml = "";

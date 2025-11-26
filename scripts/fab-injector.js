@@ -1,9 +1,5 @@
-// Floating Action Button (FAB) for Groww Pages
-// Provides quick access to AI analysis from any Groww stock page
-
 console.log("Stock Analyzerr FAB: Initializing...");
 
-// Check if FAB already exists
 if (document.getElementById("groww-ai-fab")) {
   console.log("Stock Analyzerr FAB: Already exists, skipping");
 } else {
@@ -11,7 +7,6 @@ if (document.getElementById("groww-ai-fab")) {
 }
 
 async function createFloatingActionButton() {
-  // Create FAB container
   const fab = document.createElement("div");
   fab.id = "groww-ai-fab";
   fab.innerHTML = `
@@ -21,7 +16,6 @@ async function createFloatingActionButton() {
     <div class="fab-toast" id="fab-toast"></div>
   `;
 
-  // Load modal HTML from external file
   try {
     const modalHTML = await fetch(
       chrome.runtime.getURL("scripts/fab-modal.html")
@@ -31,13 +25,11 @@ async function createFloatingActionButton() {
     console.error("Failed to load FAB modal HTML:", error);
   }
 
-  // Load FAB button CSS from external file
   const fabButtonCSS = document.createElement("link");
   fabButtonCSS.rel = "stylesheet";
   fabButtonCSS.href = chrome.runtime.getURL("scripts/fab-button.css");
   document.head.appendChild(fabButtonCSS);
 
-  // Load modal CSS from external file
   const modalCSS = document.createElement("link");
   modalCSS.rel = "stylesheet";
   modalCSS.href = chrome.runtime.getURL("scripts/fab-modal.css");
@@ -45,11 +37,9 @@ async function createFloatingActionButton() {
 
   document.body.appendChild(fab);
 
-  // Add click handlers
   const fabButton = document.getElementById("fab-button");
   fabButton.addEventListener("click", handleFABClick);
 
-  // Modal event listeners
   const fabModal = document.getElementById("fab-preview-modal");
   const fabModalCloseBtn = document.getElementById("fab-modal-close-btn");
   const fabModalCopyBtn = document.getElementById("fab-modal-copy-btn");
@@ -59,7 +49,6 @@ async function createFloatingActionButton() {
   fabModalCopyBtn.addEventListener("click", handleFABModalCopy);
   fabModalAnalyzeBtn.addEventListener("click", handleFABModalAnalyze);
 
-  // Close modal when clicking outside
   fabModal.addEventListener("click", (e) => {
     if (e.target === fabModal) {
       hideFABModal();
@@ -68,7 +57,6 @@ async function createFloatingActionButton() {
 
   console.log("Stock Analyzerr FAB: Created successfully");
 
-  // Optional: Add subtle pulse animation on first load
   setTimeout(() => {
     fabButton.classList.add("pulse");
     setTimeout(() => {
@@ -77,23 +65,19 @@ async function createFloatingActionButton() {
   }, 1000);
 }
 
-let currentStockData = null; // Store extracted data for modal actions
+let currentStockData = null;
 
 async function handleFABClick() {
   const fabButton = document.getElementById("fab-button");
 
-  // Prevent multiple clicks
   if (fabButton.classList.contains("loading")) {
     return;
   }
 
   try {
-    // Show loading state
     fabButton.classList.add("loading");
     showToast("Extracting stock data...", "info");
 
-    // Send message to background script to perform extraction
-    // (Content scripts can't use chrome.tabs or chrome.scripting APIs)
     const response = await chrome.runtime.sendMessage({
       action: "extractFromFAB",
     });
@@ -104,26 +88,21 @@ async function handleFABClick() {
 
     const result = response.result;
 
-    // Check for validation errors
     if (result.error) {
       throw new Error(result.message);
     }
 
     const stockData = result.data;
 
-    // Store data in chrome.storage
     await chrome.storage.local.set({
       growwStockData: stockData,
       lastExtracted: Date.now(),
     });
 
-    // Store data for modal actions
     currentStockData = stockData;
 
-    // Remove loading state
     fabButton.classList.remove("loading");
 
-    // Show preview modal
     showFABModal(stockData);
   } catch (error) {
     console.error("FAB click error:", error);
@@ -139,27 +118,32 @@ function showToast(message, type = "info") {
   toast.textContent = message;
   toast.className = "fab-toast show " + type;
 
-  // Auto-hide after 3 seconds
   setTimeout(() => {
     toast.classList.remove("show");
   }, 3000);
 }
 
-// Modal Helper Functions
 function showFABModal(data) {
   const modal = document.getElementById("fab-preview-modal");
   const previewContent = document.getElementById("fab-preview-content");
+  const stockName = document.getElementById("fab-stock-name");
+  const stockSymbol = document.getElementById("fab-stock-symbol");
 
   if (!modal || !previewContent) return;
 
-  // Convert data to YAML for display
   const yamlData = jsonToYaml(data);
   previewContent.textContent = yamlData;
 
-  // Show modal
+  if (stockName && data.stockName) {
+    stockName.textContent = data.stockName;
+  }
+
+  if (stockSymbol && data.symbol) {
+    stockSymbol.textContent = data.symbol.toUpperCase();
+  }
+
   modal.classList.remove("fab-hidden");
 
-  // Store the data
   currentStockData = data;
 }
 
@@ -174,7 +158,6 @@ async function handleFABModalCopy() {
   try {
     const yamlData = jsonToYaml(currentStockData);
 
-    // Copy YAML to clipboard
     await navigator.clipboard.writeText(yamlData);
 
     showToast("✓ Data copied to clipboard!", "success");
@@ -186,34 +169,28 @@ async function handleFABModalCopy() {
 
 async function handleFABModalAnalyze() {
   try {
-    // Get user preferences from storage
     const { autoSubmit, tempChat } = await chrome.storage.local.get([
       "autoSubmit",
       "tempChat",
     ]);
 
-    // Ensure data is stored with preferences
     await chrome.storage.local.set({
       growwStockData: currentStockData,
       growwAnalysisRequest: true,
-      autoSubmit: autoSubmit !== false, // Default true
-      tempChat: tempChat === true, // Default false
+      autoSubmit: autoSubmit !== false,
+      tempChat: tempChat === true,
       lastExtracted: Date.now(),
     });
 
-    // Build ChatGPT URL
     let chatGPTUrl = "https://chatgpt.com/?groww_analysis=true";
     if (tempChat) {
       chatGPTUrl += "&temporary-chat=true";
     }
 
-    // Open ChatGPT in a new tab
     window.open(chatGPTUrl, "_blank");
 
-    // Hide modal
     hideFABModal();
 
-    // Success feedback
     showToast("✓ Opening ChatGPT...", "success");
 
     const fabButton = document.getElementById("fab-button");
@@ -227,7 +204,6 @@ async function handleFABModalAnalyze() {
   }
 }
 
-// Convert JSON to YAML format (lightweight, no dependencies)
 function jsonToYaml(obj, indent = 0) {
   const spaces = "  ".repeat(indent);
   let yaml = "";
