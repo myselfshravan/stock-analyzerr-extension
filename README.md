@@ -4,6 +4,25 @@
 
 A powerful Chrome Extension that extracts comprehensive stock data from Groww.in and automatically sends it to ChatGPT for deep AI analysis — with zero manual intervention.
 
+## 🎬 Demo Video
+
+See the extension in action:
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 20px 0;">
+  <iframe 
+    src="https://cap.so/embed/0d3rgyrbfpwvv6t" 
+    frameborder="0" 
+    webkitallowfullscreen 
+    mozallowfullscreen 
+    allowfullscreen 
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  </iframe>
+</div>
+
+*Watch how to extract stock data from Groww and analyze it with ChatGPT in seconds!*
+
+---
+
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-success)
 ![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?logo=openai)
